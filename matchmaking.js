@@ -43,18 +43,51 @@ function removeFromQueue(socket) {
 function addToQueue(socket, io) {
   if (!socket) return;
 
-  // Prevent duplicate queue entries or joining while in an active game
+  // Prevent duplicate entries in the waiting queue
   if (waitingQueue.some((s) => s.id === socket.id)) {
     return;
   }
+
+  // If the socket was in a previous room, clean up that association
   if (socketToRoom.has(socket.id)) {
-    return;
+    const oldRoomId = socketToRoom.get(socket.id);
+    const oldGameData = games.get(oldRoomId);
+
+    // Leave the old Socket.io room
+    if (typeof socket.leave === 'function') {
+      socket.leave(oldRoomId);
+    }
+    socketToRoom.delete(socket.id);
+
+    // If the old game was still in progress (not completed), notify opponent
+    if (
+      oldGameData &&
+      oldGameData.game &&
+      oldGameData.game.winner === null &&
+      !oldGameData.game.isDraw
+    ) {
+      if (socket.to) {
+        socket.to(oldRoomId).emit('opponent-left');
+      } else if (io && io.to) {
+        io.to(oldRoomId).emit('opponent-left');
+      }
+    }
+
+    // Clean up player entry from old game data
+    if (oldGameData && oldGameData.players) {
+      delete oldGameData.players[socket.id];
+      // If no players remain in the old room, delete it
+      if (Object.keys(oldGameData.players).length === 0) {
+        games.delete(oldRoomId);
+      }
+    }
   }
 
+  // If another player is already waiting in queue, match them
   if (waitingQueue.length > 0) {
     const opponentSocket = waitingQueue.shift();
 
-    // If the opponent disconnected while waiting, try pairing with the next or re-queue
+    // If the waiting opponent disconnected in the meantime, try next
     if (opponentSocket.connected === false) {
       return addToQueue(socket, io);
     }
@@ -67,9 +100,9 @@ function addToQueue(socket, io) {
     const socketSymbol = isFirstPlayerX ? 'X' : 'O';
     const opponentSymbol = isFirstPlayerX ? 'O' : 'X';
 
-    // Both sockets join the room
-    socket.join(roomId);
-    opponentSocket.join(roomId);
+    // Both sockets join the new room
+    if (typeof socket.join === 'function') socket.join(roomId);
+    if (typeof opponentSocket.join === 'function') opponentSocket.join(roomId);
 
     // Track active game and socket mappings
     games.set(roomId, {

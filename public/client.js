@@ -71,19 +71,21 @@ function highlightWinningCells(board, winner) {
 // Find Game button handler
 findGameBtn.addEventListener('click', () => {
   resetBoard();
-  findGameBtn.disabled = true;
+  findGameBtn.classList.add('hidden');
+  findGameBtn.style.display = 'none';
   playAgainBtn.classList.add('hidden');
   playAgainBtn.style.display = 'none';
   statusEl.textContent = 'Searching for opponent...';
   socket.emit('find-game');
 });
 
-// Play Again button handler
+// Play Again button handler - resets board and queues player for a new match
 playAgainBtn.addEventListener('click', () => {
   resetBoard();
+  findGameBtn.classList.add('hidden');
+  findGameBtn.style.display = 'none';
   playAgainBtn.classList.add('hidden');
   playAgainBtn.style.display = 'none';
-  findGameBtn.disabled = true;
   statusEl.textContent = 'Searching for opponent...';
   socket.emit('find-game');
 });
@@ -118,7 +120,9 @@ socket.on('game-start', (data) => {
   currentTurn = 'X';
   isGameActive = true;
 
-  findGameBtn.disabled = true;
+  // Hide both buttons during the game
+  findGameBtn.classList.add('hidden');
+  findGameBtn.style.display = 'none';
   playAgainBtn.classList.add('hidden');
   playAgainBtn.style.display = 'none';
 
@@ -151,7 +155,7 @@ socket.on('move-made', (data) => {
   updateTurnStatus();
 });
 
-// On 'game-over' event
+// On 'game-over' event - show ONLY Play Again button
 socket.on('game-over', (data) => {
   isGameActive = false;
 
@@ -167,16 +171,21 @@ socket.on('game-over', (data) => {
     highlightWinningCells(data.board || boardState, data.winner);
   }
 
-  findGameBtn.disabled = false;
+  // Show only Play Again button
+  findGameBtn.classList.add('hidden');
+  findGameBtn.style.display = 'none';
   playAgainBtn.classList.remove('hidden');
   playAgainBtn.style.display = 'inline-block';
 });
 
-// On 'opponent-left' event
+// On 'opponent-left' event - show ONLY Play Again button
 socket.on('opponent-left', () => {
   isGameActive = false;
   statusEl.textContent = 'Opponent disconnected';
-  findGameBtn.disabled = false;
+
+  // Show only Play Again button
+  findGameBtn.classList.add('hidden');
+  findGameBtn.style.display = 'none';
   playAgainBtn.classList.remove('hidden');
   playAgainBtn.style.display = 'inline-block';
 });
