@@ -27,6 +27,27 @@ const WINNING_COMBINATIONS = [
 ];
 
 /**
+ * Reset button loading state and label
+ */
+function setButtonLoading(btn, isLoading, label) {
+  if (!btn) return;
+  const spinner = btn.querySelector('.spinner');
+  const textEl = btn.querySelector('.btn-text');
+
+  btn.disabled = isLoading;
+  if (spinner) {
+    if (isLoading) {
+      spinner.classList.remove('hidden');
+    } else {
+      spinner.classList.add('hidden');
+    }
+  }
+  if (textEl && label) {
+    textEl.textContent = label;
+  }
+}
+
+/**
  * Reset local game board and UI elements
  */
 function resetBoard() {
@@ -41,6 +62,7 @@ function resetBoard() {
   currentTurn = 'X';
   isGameActive = false;
   isMovePending = false;
+  statusEl.className = 'status';
 }
 
 /**
@@ -66,19 +88,26 @@ function renderBoard(board) {
 }
 
 /**
- * Update the status element based on the current turn
+ * Update the status element with turn indicators and pulse animation
  */
 function updateTurnStatus() {
   if (!isGameActive) return;
+
+  statusEl.className = 'status';
+
   if (currentTurn === mySymbol) {
     statusEl.textContent = `Your turn (${mySymbol})`;
+    const turnClass = mySymbol === 'X' ? 'turn-x' : 'turn-o';
+    statusEl.classList.add(turnClass, 'my-turn');
   } else {
     statusEl.textContent = `Opponent's turn (${currentTurn})`;
+    const turnClass = currentTurn === 'X' ? 'turn-x' : 'turn-o';
+    statusEl.classList.add(turnClass, 'opponent-turn');
   }
 }
 
 /**
- * Highlight winning 3 cells
+ * Highlight winning 3 cells with distinct glowing style
  */
 function highlightWinningCells(board, winner) {
   if (!winner || !Array.isArray(board)) return;
@@ -92,13 +121,14 @@ function highlightWinningCells(board, winner) {
   }
 }
 
-// Find Game button handler
+// Find Game button handler with disabled loading spinner state
 findGameBtn.addEventListener('click', () => {
   resetBoard();
-  findGameBtn.classList.add('hidden');
-  findGameBtn.style.display = 'none';
+  setButtonLoading(findGameBtn, true, 'Searching...');
   playAgainBtn.classList.add('hidden');
   playAgainBtn.style.display = 'none';
+
+  statusEl.className = 'status searching';
   statusEl.textContent = 'Searching for opponent...';
   socket.emit('find-game');
 });
@@ -106,10 +136,11 @@ findGameBtn.addEventListener('click', () => {
 // Play Again button handler - resets board and queues player for a new match
 playAgainBtn.addEventListener('click', () => {
   resetBoard();
+  setButtonLoading(playAgainBtn, true, 'Searching...');
   findGameBtn.classList.add('hidden');
   findGameBtn.style.display = 'none';
-  playAgainBtn.classList.add('hidden');
-  playAgainBtn.style.display = 'none';
+
+  statusEl.className = 'status searching';
   statusEl.textContent = 'Searching for opponent...';
   socket.emit('find-game');
 });
@@ -136,22 +167,27 @@ cells.forEach((cell) => {
 // Socket.io connection lifecycle listeners
 socket.on('connect', () => {
   if (!isGameActive && !findGameBtn.classList.contains('hidden') && statusEl.textContent === 'Disconnected from server') {
+    statusEl.className = 'status';
     statusEl.textContent = 'Click Find Game to start';
+    setButtonLoading(findGameBtn, false, 'Find Game');
   }
 });
 
 socket.on('disconnect', () => {
   isGameActive = false;
   isMovePending = false;
+  statusEl.className = 'status';
   statusEl.textContent = 'Disconnected from server';
+  setButtonLoading(findGameBtn, false, 'Find Game');
   findGameBtn.classList.remove('hidden');
-  findGameBtn.style.display = 'inline-block';
+  findGameBtn.style.display = 'inline-flex';
   playAgainBtn.classList.add('hidden');
   playAgainBtn.style.display = 'none';
 });
 
 // On 'waiting' event
 socket.on('waiting', () => {
+  statusEl.className = 'status searching';
   statusEl.textContent = 'Waiting for another player...';
 });
 
@@ -164,7 +200,9 @@ socket.on('game-start', (data) => {
   isGameActive = true;
   isMovePending = false;
 
-  // Hide buttons during active play
+  // Restore button states for future use and hide during active match
+  setButtonLoading(findGameBtn, false, 'Find Game');
+  setButtonLoading(playAgainBtn, false, 'Play Again');
   findGameBtn.classList.add('hidden');
   findGameBtn.style.display = 'none';
   playAgainBtn.classList.add('hidden');
@@ -212,34 +250,41 @@ socket.on('game-over', (data) => {
     renderBoard(data.board);
   }
 
+  statusEl.className = 'status';
   if (data.isDraw) {
     statusEl.textContent = "Game Over: It's a draw!";
+    statusEl.classList.add('draw-status');
   } else if (data.winner === mySymbol) {
-    statusEl.textContent = 'Game Over: You won!';
+    statusEl.textContent = 'Game Over: You won! 🎉';
+    statusEl.classList.add('winner-status');
   } else if (data.winner) {
     statusEl.textContent = 'Game Over: You lost!';
+    statusEl.classList.add('loser-status');
   }
 
   if (data.winner) {
     highlightWinningCells(data.board || boardState, data.winner);
   }
 
-  // Show only Play Again button
+  // Show only Play Again button ready for interaction
+  setButtonLoading(playAgainBtn, false, 'Play Again');
   findGameBtn.classList.add('hidden');
   findGameBtn.style.display = 'none';
   playAgainBtn.classList.remove('hidden');
-  playAgainBtn.style.display = 'inline-block';
+  playAgainBtn.style.display = 'inline-flex';
 });
 
 // On 'opponent-left' event - show ONLY Play Again button
 socket.on('opponent-left', () => {
   isGameActive = false;
   isMovePending = false;
+  statusEl.className = 'status loser-status';
   statusEl.textContent = 'Opponent disconnected';
 
-  // Show only Play Again button
+  // Show only Play Again button ready for interaction
+  setButtonLoading(playAgainBtn, false, 'Play Again');
   findGameBtn.classList.add('hidden');
   findGameBtn.style.display = 'none';
   playAgainBtn.classList.remove('hidden');
-  playAgainBtn.style.display = 'inline-block';
+  playAgainBtn.style.display = 'inline-flex';
 });
