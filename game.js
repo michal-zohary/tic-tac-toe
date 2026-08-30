@@ -25,7 +25,7 @@ class TicTacToeGame {
         symbol: null,
         winner: this.winner,
         isDraw: this.isDraw,
-        board: this.board,
+        board: [...this.board],
       };
     }
 
@@ -41,7 +41,7 @@ class TicTacToeGame {
         symbol: null,
         winner: this.winner,
         isDraw: this.isDraw,
-        board: this.board,
+        board: [...this.board],
       };
     }
 
@@ -52,7 +52,7 @@ class TicTacToeGame {
         symbol: null,
         winner: this.winner,
         isDraw: this.isDraw,
-        board: this.board,
+        board: [...this.board],
       };
     }
 
@@ -63,7 +63,7 @@ class TicTacToeGame {
         symbol: null,
         winner: this.winner,
         isDraw: this.isDraw,
-        board: this.board,
+        board: [...this.board],
       };
     }
 
@@ -86,7 +86,7 @@ class TicTacToeGame {
         symbol,
         winner: this.winner,
         isDraw: false,
-        board: this.board,
+        board: [...this.board],
       };
     }
 
@@ -99,7 +99,7 @@ class TicTacToeGame {
         symbol,
         winner: null,
         isDraw: true,
-        board: this.board,
+        board: [...this.board],
       };
     }
 
@@ -111,13 +111,13 @@ class TicTacToeGame {
       symbol,
       winner: null,
       isDraw: false,
-      board: this.board,
+      board: [...this.board],
     };
   }
 
   getState() {
     return {
-      board: this.board,
+      board: [...this.board],
       turn: this.turn,
       winner: this.winner,
       isDraw: this.isDraw,

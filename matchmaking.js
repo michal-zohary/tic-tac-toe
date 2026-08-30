@@ -36,24 +36,42 @@ function removeFromQueue(socket) {
 }
 
 /**
+ * Clean up a game room and all associated player mappings.
+ * @param {string} roomId - The room identifier to clean up.
+ */
+function cleanUpRoom(roomId) {
+  if (!roomId) return;
+  const gameData = games.get(roomId);
+  if (gameData && gameData.players) {
+    Object.keys(gameData.players).forEach((playerId) => {
+      socketToRoom.delete(playerId);
+      const playerObj = gameData.players[playerId];
+      if (playerObj && playerObj.socket && typeof playerObj.socket.leave === 'function') {
+        playerObj.socket.leave(roomId);
+      }
+    });
+  }
+  games.delete(roomId);
+}
+
+/**
  * Add a socket to the matchmaking queue or pair with a waiting player.
  * @param {object} socket - The player's socket.
  * @param {object} io - The Socket.io server instance.
  */
 function addToQueue(socket, io) {
-  if (!socket) return;
+  if (!socket || socket.connected === false) return;
 
   // Prevent duplicate entries in the waiting queue
   if (waitingQueue.some((s) => s.id === socket.id)) {
     return;
   }
 
-  // If the socket was in a previous room, clean up that association
+  // If the socket was associated with an earlier room, clean up old association
   if (socketToRoom.has(socket.id)) {
     const oldRoomId = socketToRoom.get(socket.id);
     const oldGameData = games.get(oldRoomId);
 
-    // Leave the old Socket.io room
     if (typeof socket.leave === 'function') {
       socket.leave(oldRoomId);
     }
@@ -73,22 +91,24 @@ function addToQueue(socket, io) {
       }
     }
 
-    // Clean up player entry from old game data
     if (oldGameData && oldGameData.players) {
       delete oldGameData.players[socket.id];
-      // If no players remain in the old room, delete it
       if (Object.keys(oldGameData.players).length === 0) {
         games.delete(oldRoomId);
       }
     }
   }
 
-  // If another player is already waiting in queue, match them
+  // Filter out any stale/disconnected sockets from the queue
+  while (waitingQueue.length > 0 && waitingQueue[0].connected === false) {
+    waitingQueue.shift();
+  }
+
+  // If another player is waiting in queue, match them
   if (waitingQueue.length > 0) {
     const opponentSocket = waitingQueue.shift();
 
-    // If the waiting opponent disconnected in the meantime, try next
-    if (opponentSocket.connected === false) {
+    if (opponentSocket.connected === false || opponentSocket.id === socket.id) {
       return addToQueue(socket, io);
     }
 
@@ -141,11 +161,17 @@ function handleDisconnect(socket, io) {
   if (roomId) {
     const gameData = games.get(roomId);
     if (gameData) {
-      // Notify opponent
-      if (socket.to) {
-        socket.to(roomId).emit('opponent-left');
-      } else if (io && io.to) {
-        io.to(roomId).emit('opponent-left');
+      // Notify opponent ONLY if the game was still active/ongoing
+      if (
+        gameData.game &&
+        gameData.game.winner === null &&
+        !gameData.game.isDraw
+      ) {
+        if (socket.to) {
+          socket.to(roomId).emit('opponent-left');
+        } else if (io && io.to) {
+          io.to(roomId).emit('opponent-left');
+        }
       }
 
       // Clean up socketToRoom map for all players in this game
@@ -168,6 +194,7 @@ module.exports = {
   activeGames: games,
   socketToRoom,
   playerRooms: socketToRoom,
+  cleanUpRoom,
   addToQueue,
   removeFromQueue,
   handleDisconnect,
