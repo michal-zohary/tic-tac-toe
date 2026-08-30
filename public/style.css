@@ -1,0 +1,194 @@
+/* Base Reset and Modern Dark Theme */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 100%);
+  color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 420px;
+  width: 100%;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, #60a5fa 0%, #a855f7 50%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Status Message */
+.status {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #94a3b8;
+  min-height: 28px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+/* Prominent Find Game Button */
+#find-game-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+#find-game-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+#find-game-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+#find-game-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Play Again Button */
+#play-again-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+#play-again-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+}
+
+#play-again-btn:active {
+  transform: translateY(1px);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 3x3 Grid Game Board */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-template-rows: repeat(3, 100px);
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+}
+
+/* Individual Cell */
+.cell {
+  width: 100px;
+  height: 100px;
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #f8fafc;
+  cursor: default;
+  user-select: none;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+/* Hover effect on empty interactive cells */
+.cell:empty:not(:disabled),
+.cell:not(.x):not(.o):not(:disabled) {
+  cursor: pointer;
+}
+
+.cell:empty:not(:disabled):hover,
+.cell:not(.x):not(.o):not(:disabled):hover {
+  background: #334155;
+  border-color: #64748b;
+  transform: scale(1.03);
+  box-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
+}
+
+/* Mark Styles */
+.cell.x,
+.cell[data-symbol="X"],
+.x {
+  color: #38bdf8;
+  text-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+  animation: scaleSymbol 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.cell.o,
+.cell[data-symbol="O"],
+.o {
+  color: #f87171;
+  text-shadow: 0 0 16px rgba(248, 113, 113, 0.5);
+  animation: scaleSymbol 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Subtle Scale Placement Animation */
+@keyframes scaleSymbol {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
