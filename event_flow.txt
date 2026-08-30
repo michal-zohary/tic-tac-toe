@@ -1,0 +1,18 @@
+Player A            Server              Player B
+   |                   |                    |
+   |--- find-game ---->|                    |
+   |<--- waiting ------|                    |
+   |                   |<--- find-game -----|  
+   |<-- game-start ----|--- game-start ---->|
+   |    (you are X)    |    (you are O)     |
+   |                   |                    |
+   |--- make-move ---->|                    |  (A clicks cell 4)
+   |<-- move-made -----|--- move-made ----->|  (server: valid!)
+   |                   |                    |
+   |                   |<--- make-move -----|  (B clicks cell 0)
+   |<-- move-made -----|--- move-made ----->|  (server: valid!)
+   |                   |                    |
+   |       ...more moves...                 |
+   |                   |                    |
+   |<-- game-over -----|--- game-over ----->|  (X wins!)
+   |    (you won!)     |    (you lost)      |
